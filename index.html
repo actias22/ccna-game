@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>NW研修アドベンチャー：第3話</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -12,8 +12,6 @@
             --window-bg: rgba(10, 15, 25, 0.95);
             --text-main: #f8fafc;
             --accent: #38bdf8;
-            --senior-color: #38bdf8;
-            --newcomer-color: #f472b6;
             --success-color: #ccff00;
             --error-color: #ef4444;
         }
@@ -27,10 +25,15 @@
             justify-content: center;
             align-items: center;
             height: 100vh;
+            /* スマホブラウザ特有のアドレスバーの挙動に対応するための単位 */
+            height: 100dvh; 
             margin: 0;
             overflow: hidden;
         }
 
+        /* -------------------------------------
+           ベース設定（PC・横画面向け）
+        ------------------------------------- */
         #game-stage {
             width: 100vw;
             height: 100vh;
@@ -40,42 +43,40 @@
             background-color: #111;
             background-size: cover;
             background-position: center;
-            border: 1px solid #333;
             display: flex;
             flex-direction: column;
             justify-content: flex-end;
+            overflow: hidden;
         }
 
-        /* ストーリー用 */
+        /* ストーリーパート */
         #story-layer {
             width: 100%; height: 100%;
             position: absolute; top: 0; left: 0;
             display: flex; flex-direction: column; justify-content: flex-end;
-            cursor: pointer;
-            z-index: 10;
+            cursor: pointer; z-index: 10;
         }
 
         #char-layer {
-            position: absolute; bottom: 200px; width: 100%; height: 80%;
+            position: absolute; bottom: 180px; width: 100%; height: 70%;
             display: flex; justify-content: space-around; align-items: flex-end;
-            padding: 0 50px; pointer-events: none;
+            padding: 0 10%; pointer-events: none;
         }
 
         .sprite {
-            width: 350px; height: 500px;
+            width: 40%; height: 100%;
             background-size: contain; background-repeat: no-repeat; background-position: bottom center;
             filter: brightness(0.4) grayscale(0.3); transition: all 0.3s ease; transform: scale(0.95);
         }
-
         .sprite.active { filter: brightness(1) grayscale(0); transform: scale(1.05); }
 
-        #sprite-senior { background-image: url('image/senior.jpg'); }
-        #sprite-newcomer { background-image: url('image/newcomer.jpg'); }
+        #sprite-senior { background-image: url('senior.png'); }
+        #sprite-newcomer { background-image: url('newcomer.png'); }
 
         #message-window {
-            width: 95%; max-width: 1100px; height: 180px; margin: 0 auto 20px;
+            width: 95%; height: 160px; margin: 0 auto 20px;
             background: var(--window-bg); border: 2px solid #334155; border-radius: 12px;
-            padding: 30px 50px; position: relative;
+            padding: 25px 40px; position: relative;
         }
 
         #name-tag {
@@ -85,7 +86,7 @@
 
         #message-text { font-size: 22px; color: var(--text-main); line-height: 1.6; }
 
-        /* パズル用 */
+        /* パズルパート */
         #puzzle-layer {
             display: none; width: 100%; height: 100%;
             position: absolute; top: 0; left: 0;
@@ -123,8 +124,76 @@
             font-family: 'JetBrains Mono', monospace; font-size: 24px;
         }
 
+        /* -------------------------------------
+           スマホ・縦画面向け（レスポンシブ）
+        ------------------------------------- */
+        @media (max-width: 768px), (orientation: portrait) {
+            #game-stage {
+                width: 100vw;
+                height: 100dvh; /* スマホの縦幅いっぱいに広げる */
+                max-width: 100%;
+                max-height: 100%;
+                border: none;
+            }
+
+            #char-layer {
+                bottom: 25%; /* テキストウィンドウの上に配置 */
+                height: 50%; /* キャラが大きすぎないように調整 */
+                padding: 0 2%;
+            }
+
+            .sprite {
+                width: 48%; /* 縦画面でも2体が並べるように */
+            }
+
+            #message-window {
+                width: 95%;
+                height: auto;
+                min-height: 22%; /* 高さを少し広めに確保 */
+                margin-bottom: 5%;
+                padding: 25px 20px 15px; /* 上部のパディングを確保（名前タグと被らないように） */
+            }
+
+            #message-text {
+                font-size: 16px; /* スマホ用にフォントサイズを縮小 */
+            }
+
+            #name-tag {
+                font-size: 14px;
+                top: -15px;
+                padding: 3px 20px;
+            }
+
+            /* パズル画面の縦最適化 */
+            .puzzle-box {
+                padding: 20px;
+                width: 95%;
+            }
+
+            .puzzle-box h2 { font-size: 20px; }
+            .puzzle-box p { font-size: 14px; }
+            .target-ip { font-size: 28px; padding: 10px; }
+
+            .input-group {
+                flex-direction: column; /* 横並びを縦並びに変更 */
+                align-items: flex-start;
+            }
+
+            .input-group label {
+                width: 100%;
+                text-align: left;
+                margin-bottom: 5px;
+                font-size: 14px;
+            }
+
+            .ip-input {
+                width: 100%; /* 入力欄を横幅いっぱいにしてタップしやすく */
+                font-size: 20px;
+            }
+        }
+
         @keyframes blink { 50% { opacity: 0; } }
-        .cursor { display: inline-block; width: 15px; height: 15px; background: var(--accent); animation: blink 1s infinite; }
+        .cursor { display: inline-block; width: 12px; height: 12px; background: var(--accent); animation: blink 1s infinite; }
     </style>
 </head>
 <body>
@@ -140,7 +209,7 @@
         <div id="message-window">
             <div id="name-tag"></div>
             <div id="message-text"></div>
-            <div style="position: absolute; bottom: 15px; right: 25px;"><span class="cursor"></span></div>
+            <div style="position: absolute; bottom: 15px; right: 20px;"><span class="cursor"></span></div>
         </div>
     </div>
 
@@ -158,14 +227,14 @@
                 <input type="number" id="ans-bc" class="ip-input" placeholder="??">
             </div>
             <button class="submit-btn" onclick="checkPuzzle()">解析実行</button>
-            <p id="puzzle-feedback" style="margin-top:20px; min-height:24px;"></p>
+            <p id="puzzle-feedback" style="margin-top:20px; min-height:24px; font-size:14px; line-height:1.5;"></p>
         </div>
     </div>
 </div>
 
 <script>
     // --------------------------------------------------
-    // 設定
+    // 設定（★ここを書き換えてください★）
     // --------------------------------------------------
     const GAS_URL = "https://script.google.com/macros/s/AKfycbzX8kMZXcAd9lha8I1atnU48S7zEuGV_-VUKXNnzOzZ1cMofUARH6XqKr4GJc_EsJlV/exec";
     
@@ -187,7 +256,7 @@
             document.getElementById('loading-screen').style.display = 'none';
             renderStep();
         } catch (e) {
-            document.getElementById('loading-screen').innerText = "FATAL ERROR: DATA FETCH FAILED";
+            document.getElementById('loading-screen').innerText = "FATAL ERROR: DATA FETCH FAILED\n\n・URLが間違っていないか\n・GASの権限が「全員」になっているか\n確認してください。";
         }
     }
 
@@ -235,10 +304,14 @@
 
         if (nw === "64" && bc === "95") {
             feedback.style.color = "var(--success-color)";
-            feedback.innerText = "正解です！第3話ミッション・コンプリート。";
+            feedback.innerHTML = "<strong>正解です！</strong><br>ホスト部をすべて0にするとNWアドレス、1にするとBCアドレスになるロジックが完璧に理解できています。";
         } else {
             feedback.style.color = "var(--error-color)";
-            feedback.innerText = "解析エラー。計算を見直してください。";
+            if (nw !== "64") {
+                feedback.innerHTML = "<strong>エラー：ネットワークアドレスが違います。</strong><br>ヒント：90の2進数「01011010」のホスト部（右5つ）をすべて『0』にしてみてください。";
+            } else if (bc !== "95") {
+                feedback.innerHTML = "<strong>エラー：ブロードキャストアドレスが違います。</strong><br>ヒント：NWアドレスは正解です！次はホスト部（右5つ）をすべて『1』にしてみてください。";
+            }
         }
     }
 
