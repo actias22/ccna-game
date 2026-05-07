@@ -100,6 +100,7 @@
         }
         .sprite.active { filter: brightness(1) grayscale(0); transform: scale(1.05); }
 
+        /* 画像パス指定 */
         #sprite-senior { background-image: url('image/senior.jpg'); }
         #sprite-newcomer { background-image: url('image/newcomer.jpg'); }
 
@@ -112,6 +113,20 @@
             position: absolute; top: -20px; left: 30px; padding: 5px 30px; font-weight: 700; font-size: 18px; color: #000; border-radius: 4px;
         }
         #message-text { font-size: 22px; color: var(--text-main); line-height: 1.6; }
+
+        /* -------------------------------------
+           ポップアップ演出（NEW）
+        ------------------------------------- */
+        #popup-layer {
+            display: none; position: absolute; inset: 0; background: rgba(0, 0, 0, 0.85);
+            z-index: 40; justify-content: center; align-items: center; flex-direction: column;
+            cursor: pointer; animation: fadeIn 0.3s ease;
+        }
+
+        #popup-content { width: 85%; max-width: 650px; text-align: center; }
+        #popup-image { width: 100%; height: auto; border: 3px solid var(--accent); border-radius: 12px; box-shadow: 0 0 40px rgba(56, 189, 248, 0.4); }
+
+        @keyframes fadeIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
 
         /* -------------------------------------
            パズルパート
@@ -147,6 +162,7 @@
             .input-group { flex-direction: column; align-items: flex-start; }
             .input-group label { width: 100%; text-align: left; margin-bottom: 5px; font-size: 14px; }
             .ip-input { width: 100%; font-size: 20px; }
+            #popup-content { width: 95%; }
         }
 
         @keyframes blink { 50% { opacity: 0; } }
@@ -161,9 +177,16 @@
         <div class="game-title">NW TRAINING<br>ADVENTURE</div>
         <div class="game-subtitle">～ 論理的思考で学ぶネットワーク構築 ～</div>
         <div class="ep-list">
-            <button class="ep-btn locked" onclick="alert('準備中です')">第1話：ネットワークとは？ 🔒</button>
+            <button class="ep-btn" onclick="startGame('ep1')">第1話：ネットワークとは？ <span>▶</span></button>
             <button class="ep-btn locked" onclick="alert('準備中です')">第2話：2進数の基礎 🔒</button>
-            <button class="ep-btn" onclick="startGame('ep3')">第3話：IPアドレスと定規 ▶</button>
+            <button class="ep-btn" onclick="startGame('ep3')">第3話：IPアドレスと定規 <span>▶</span></button>
+        </div>
+    </div>
+
+    <div id="popup-layer" onclick="closePopup()">
+        <div id="popup-content">
+            <img id="popup-image" src="" alt="図解">
+            <div style="margin-top: 15px; font-size: 14px; color: var(--accent); font-weight: bold; letter-spacing: 1px;">[ 画面をタップして閉じる ]</div>
         </div>
     </div>
 
@@ -186,8 +209,8 @@
     <div id="puzzle-layer">
         <div class="puzzle-box">
             <h2 style="color:var(--accent); margin-bottom:10px;">MISSION: NETWORK CALCULATION</h2>
-            <p style="color:#94a3b8; margin-bottom:20px;">192.168.1.90/27 の解析</p>
-            <div class="target-ip">192.168.1.90 <span style="color:var(--accent)">/ 27</span></div>
+            <p id="puzzle-desc" style="color:#94a3b8; margin-bottom:20px;">IPアドレスの解析</p>
+            <div id="puzzle-target" class="target-ip">---</div>
             <div class="input-group">
                 <label>NWアドレス (末尾)</label>
                 <input type="number" id="ans-nw" class="ip-input" placeholder="??">
@@ -204,6 +227,9 @@
 </div>
 
 <script>
+    // --------------------------------------------------
+    // 設定
+    // --------------------------------------------------
     const GAS_URL = "https://script.google.com/macros/s/AKfycbzX8kMZXcAd9lha8I1atnU48S7zEuGV_-VUKXNnzOzZ1cMofUARH6XqKr4GJc_EsJlV/exec";
     
     const BG_IMAGES = {
@@ -213,8 +239,10 @@
 
     let scenarioData = [];
     let currentIndex = 0;
+    let currentEpisodeId = "";
 
     async function startGame(episodeId) {
+        currentEpisodeId = episodeId;
         document.getElementById('title-layer').style.display = 'none';
         document.getElementById('loading-screen').style.display = 'flex';
 
@@ -238,17 +266,38 @@
         location.reload();
     }
 
+    function closePopup() {
+        document.getElementById('popup-layer').style.display = 'none';
+    }
+
     function renderStep() {
         const step = scenarioData[currentIndex];
         
+        // パズル判定
         if (step.type === "puzzle") {
             document.getElementById('story-layer').style.display = 'none';
             document.getElementById('puzzle-layer').style.display = 'flex';
-            // パズル画面の状態をリセット
+            
+            // ep3用の固定クイズ内容を設定
+            if(currentEpisodeId === "ep3") {
+                document.getElementById('puzzle-desc').innerText = "192.168.1.90/27 の解析";
+                document.getElementById('puzzle-target').innerHTML = "192.168.1.90 <span style='color:var(--accent)'>/ 27</span>";
+            }
+            
             document.getElementById('submit-puzzle').style.display = 'inline-block';
             document.getElementById('next-story-btn').style.display = 'none';
             document.getElementById('puzzle-feedback').innerText = "";
             return;
+        }
+
+        // ポップアップ制御（NEW）
+        const popupLayer = document.getElementById('popup-layer');
+        const popupImg = document.getElementById('popup-image');
+        if (step.popup && step.popup !== "") {
+            popupImg.src = step.popup;
+            popupLayer.style.display = 'flex';
+        } else {
+            popupLayer.style.display = 'none';
         }
 
         const nameTag = document.getElementById('name-tag');
@@ -269,6 +318,9 @@
     }
 
     function handleInteraction() {
+        // ポップアップが表示されている間はストーリーを進めない
+        if (document.getElementById('popup-layer').style.display === 'flex') return;
+
         if (currentIndex < scenarioData.length - 1) {
             currentIndex++;
             renderStep();
@@ -282,28 +334,29 @@
 
         if (nw === "64" && bc === "95") {
             feedback.style.color = "var(--success-color)";
-            feedback.innerHTML = "<strong>解析成功！</strong><br>正解です。論理的な理解が進んでいるようですね。";
-            
-            // 解析実行ボタンを隠し、戻るボタンを出す
+            feedback.innerHTML = "<strong>解析成功！</strong>";
             document.getElementById('submit-puzzle').style.display = 'none';
             document.getElementById('next-story-btn').style.display = 'inline-block';
         } else {
             feedback.style.color = "var(--error-color)";
-            feedback.innerHTML = "<strong>解析エラー。</strong><br>ホスト部（右5つ）のビット操作を確認してください。";
+            feedback.innerHTML = "<strong>解析エラー。</strong><br>計算をやり直してください。";
         }
     }
 
-    // パズル終了後にシナリオの続きへ進む処理
     function finishPuzzle() {
         document.getElementById('puzzle-layer').style.display = 'none';
         document.getElementById('story-layer').style.display = 'flex';
-        
-        // 台本の次の行へ進める
         if (currentIndex < scenarioData.length - 1) {
             currentIndex++;
             renderStep();
         }
     }
+
+    window.onload = function() {
+        // 画像のプリロード
+        const p1 = new Image(); p1.src = "image/senior.jpg";
+        const p2 = new Image(); p2.src = "image/newcomer.jpg";
+    };
 </script>
 </body>
 </html>
