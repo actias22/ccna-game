@@ -66,7 +66,15 @@
 
         .ep-btn:hover { background: #334155; border-color: var(--accent); transform: translateX(10px); }
         .ep-btn.locked { opacity: 0.5; cursor: not-allowed; }
-        .ep-btn.locked:hover { transform: none; background: rgba(30, 41, 59, 0.8); border-color: #334155; }
+
+        /* メニューボタン（画面右上の「戻る」ボタン） */
+        .menu-btn {
+            position: absolute; top: 20px; right: 20px; z-index: 30;
+            background: rgba(15, 23, 42, 0.8); border: 1px solid #475569;
+            color: #fff; font-size: 14px; padding: 8px 16px; border-radius: 20px;
+            cursor: pointer; transition: 0.2s; display: none;
+        }
+        .menu-btn:hover { background: var(--error-color); border-color: var(--error-color); color: #000; }
 
         /* ロード画面 */
         #loading-screen {
@@ -76,7 +84,7 @@
         }
 
         /* -------------------------------------
-           ストーリー・パズル画面（既存）
+           ストーリーパート
         ------------------------------------- */
         #story-layer {
             display: none; width: 100%; height: 100%; position: absolute; top: 0; left: 0;
@@ -94,6 +102,7 @@
         }
         .sprite.active { filter: brightness(1) grayscale(0); transform: scale(1.05); }
 
+        /* 画像パス指定 */
         #sprite-senior { background-image: url('image/senior.jpg'); }
         #sprite-newcomer { background-image: url('image/newcomer.jpg'); }
 
@@ -107,6 +116,7 @@
         }
         #message-text { font-size: 22px; color: var(--text-main); line-height: 1.6; }
 
+        /* パズルパート */
         #puzzle-layer {
             display: none; width: 100%; height: 100%; position: absolute; top: 0; left: 0;
             background: rgba(10, 15, 25, 0.98); z-index: 20; flex-direction: column; align-items: center; justify-content: center;
@@ -132,6 +142,7 @@
             .input-group { flex-direction: column; align-items: flex-start; }
             .input-group label { width: 100%; text-align: left; margin-bottom: 5px; font-size: 14px; }
             .ip-input { width: 100%; font-size: 20px; }
+            .menu-btn { top: 10px; right: 10px; font-size: 12px; padding: 6px 12px; }
         }
 
         @keyframes blink { 50% { opacity: 0; } }
@@ -146,11 +157,13 @@
         <div class="game-title">NW TRAINING<br>ADVENTURE</div>
         <div class="game-subtitle">～ 論理的思考で学ぶネットワーク構築 ～</div>
         <div class="ep-list">
-            <button class="ep-btn locked" onclick="alert('このエピソードは準備中です')">第1話：ネットワークとは？ <span>🔒</span></button>
-            <button class="ep-btn locked" onclick="alert('このエピソードは準備中です')">第2話：2進数の基礎 <span>🔒</span></button>
-            <button class="ep-btn" onclick="startGame('ep3')">第3話：IPアドレスと定規 <span>▶</span></button>
+            <button class="ep-btn locked" onclick="alert('準備中です')">第1話：ネットワークとは？ 🔒</button>
+            <button class="ep-btn locked" onclick="alert('準備中です')">第2話：2進数の基礎 🔒</button>
+            <button class="ep-btn" onclick="startGame('ep3')">第3話：IPアドレスと定規 ▶</button>
         </div>
     </div>
+
+    <button id="back-to-title" class="menu-btn" onclick="event.stopPropagation(); backToTitle()">タイトルへ戻る</button>
 
     <div id="loading-screen">FETCHING DATA...</div>
 
@@ -169,29 +182,27 @@
     <div id="puzzle-layer">
         <div class="puzzle-box">
             <h2 style="color:var(--accent); margin-bottom:10px;">MISSION: NETWORK CALCULATION</h2>
-            <p style="color:#94a3b8; margin-bottom:20px;">192.168.1.90/27 のネットワーク情報を解析せよ</p>
+            <p style="color:#94a3b8; margin-bottom:20px;">192.168.1.90/27 の解析</p>
             <div class="target-ip">192.168.1.90 <span style="color:var(--accent)">/ 27</span></div>
             <div class="input-group">
-                <label>ネットワークアドレス (末尾)</label>
+                <label>NWアドレス (末尾)</label>
                 <input type="number" id="ans-nw" class="ip-input" placeholder="??">
             </div>
             <div class="input-group">
-                <label>ブロードキャストアドレス (末尾)</label>
+                <label>BCアドレス (末尾)</label>
                 <input type="number" id="ans-bc" class="ip-input" placeholder="??">
             </div>
             <button class="submit-btn" onclick="checkPuzzle()">解析実行</button>
             <p id="puzzle-feedback" style="margin-top:20px; min-height:24px; font-size:14px; line-height:1.5;"></p>
-            
-            <button class="submit-btn" style="background: #334155; color: #fff; margin-top: 10px; display: none;" id="return-btn" onclick="location.reload()">タイトルへ戻る</button>
         </div>
     </div>
 </div>
 
 <script>
     // --------------------------------------------------
-    // 設定（★書き換えてください★）
+    // 設定
     // --------------------------------------------------
-    const GAS_URL = "https://script.google.com/macros/s/AKfycbzX8kMZXcAd9lha8I1atnU48S7zEuGV_-VUKXNnzOzZ1cMofUARH6XqKr4GJc_EsJlV/exec";
+    const GAS_URL = "ここにあなたのGASウェブアプリURLを貼り付け";
     
     const BG_IMAGES = {
         office: "https://images.unsplash.com/photo-1497215728101-856f4ea42174?auto=format&fit=crop&w=1280&q=80",
@@ -201,25 +212,33 @@
     let scenarioData = [];
     let currentIndex = 0;
 
-    // ゲーム開始処理（引数でエピソードIDを受け取る）
     async function startGame(episodeId) {
-        // UIの切り替え
         document.getElementById('title-layer').style.display = 'none';
         document.getElementById('loading-screen').style.display = 'flex';
 
         try {
-            // URLの末尾に ?ep=ep3 などを付与してGASにリクエスト
             const res = await fetch(`${GAS_URL}?ep=${episodeId}`);
             scenarioData = await res.json();
             
             document.getElementById('loading-screen').style.display = 'none';
             document.getElementById('story-layer').style.display = 'flex';
+            document.getElementById('back-to-title').style.display = 'block'; // ボタンを表示
             
             currentIndex = 0;
             renderStep();
         } catch (e) {
             document.getElementById('loading-screen').innerText = "ERROR: DATA FETCH FAILED";
         }
+    }
+
+    // タイトルへ戻る処理
+    function backToTitle() {
+        if (!confirm('タイトルに戻りますか？（進捗はリセットされます）')) return;
+        
+        document.getElementById('title-layer').style.display = 'flex';
+        document.getElementById('story-layer').style.display = 'none';
+        document.getElementById('puzzle-layer').style.display = 'none';
+        document.getElementById('back-to-title').style.display = 'none'; // ボタンを隠す
     }
 
     function renderStep() {
@@ -259,19 +278,13 @@
         const nw = document.getElementById('ans-nw').value;
         const bc = document.getElementById('ans-bc').value;
         const feedback = document.getElementById('puzzle-feedback');
-        const returnBtn = document.getElementById('return-btn');
 
         if (nw === "64" && bc === "95") {
             feedback.style.color = "var(--success-color)";
-            feedback.innerHTML = "<strong>正解です！</strong><br>ホスト部をすべて0にするとNWアドレス、1にするとBCアドレスになるロジックが完璧に理解できています。";
-            returnBtn.style.display = "inline-block"; // 正解したら「タイトルへ戻る」ボタンを表示
+            feedback.innerHTML = "<strong>正解です！</strong>";
         } else {
             feedback.style.color = "var(--error-color)";
-            if (nw !== "64") {
-                feedback.innerHTML = "<strong>エラー：ネットワークアドレスが違います。</strong><br>ヒント：90の2進数「01011010」のホスト部（右5つ）をすべて『0』にしてみてください。";
-            } else if (bc !== "95") {
-                feedback.innerHTML = "<strong>エラー：ブロードキャストアドレスが違います。</strong><br>ヒント：NWアドレスは正解です！次はホスト部（右5つ）をすべて『1』にしてみてください。";
-            }
+            feedback.innerHTML = "<strong>エラー：再計算してください。</strong>";
         }
     }
 </script>
