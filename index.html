@@ -39,7 +39,7 @@
         }
 
         /* -------------------------------------
-           タイトル（エピソード選択）画面
+           タイトル画面
         ------------------------------------- */
         #title-layer {
             position: absolute; inset: 0; z-index: 50;
@@ -67,7 +67,6 @@
         .ep-btn:hover { background: #334155; border-color: var(--accent); transform: translateX(10px); }
         .ep-btn.locked { opacity: 0.5; cursor: not-allowed; }
 
-        /* メニューボタン（画面右上の「戻る」ボタン） */
         .menu-btn {
             position: absolute; top: 20px; right: 20px; z-index: 30;
             background: rgba(15, 23, 42, 0.8); border: 1px solid #475569;
@@ -76,7 +75,6 @@
         }
         .menu-btn:hover { background: var(--error-color); border-color: var(--error-color); color: #000; }
 
-        /* ロード画面 */
         #loading-screen {
             position: absolute; inset: 0; background: #000; color: var(--accent);
             display: none; align-items: center; justify-content: center; z-index: 100;
@@ -102,7 +100,6 @@
         }
         .sprite.active { filter: brightness(1) grayscale(0); transform: scale(1.05); }
 
-        /* 画像パス指定 */
         #sprite-senior { background-image: url('image/senior.jpg'); }
         #sprite-newcomer { background-image: url('image/newcomer.jpg'); }
 
@@ -116,7 +113,9 @@
         }
         #message-text { font-size: 22px; color: var(--text-main); line-height: 1.6; }
 
-        /* パズルパート */
+        /* -------------------------------------
+           パズルパート
+        ------------------------------------- */
         #puzzle-layer {
             display: none; width: 100%; height: 100%; position: absolute; top: 0; left: 0;
             background: rgba(10, 15, 25, 0.98); z-index: 20; flex-direction: column; align-items: center; justify-content: center;
@@ -127,7 +126,13 @@
         .input-group { display: flex; align-items: center; justify-content: center; margin-bottom: 15px; }
         .input-group label { width: 250px; text-align: right; margin-right: 15px; color: #94a3b8; }
         .ip-input { font-family: 'JetBrains Mono', monospace; font-size: 24px; width: 100px; padding: 8px; background: #1e293b; border: 2px solid #475569; color: var(--success-color); border-radius: 6px; text-align: center; }
-        .submit-btn { background: var(--accent); color: #000; font-weight: 700; padding: 12px 40px; border: none; border-radius: 6px; cursor: pointer; margin-top: 20px; }
+        
+        .submit-btn { background: var(--accent); color: #000; font-weight: 700; padding: 12px 40px; border: none; border-radius: 6px; cursor: pointer; margin-top: 20px; transition: 0.2s; }
+        .submit-btn:hover { transform: scale(1.05); background: var(--success-color); }
+        
+        .next-story-btn { background: var(--success-color); color: #000; font-weight: 700; padding: 12px 40px; border: none; border-radius: 6px; cursor: pointer; margin-top: 20px; display: none; animation: pulse 2s infinite; }
+
+        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
 
         @media (max-width: 768px), (orientation: portrait) {
             #game-stage { width: 100vw; height: 100dvh; max-width: 100%; max-height: 100%; border: none; }
@@ -142,7 +147,6 @@
             .input-group { flex-direction: column; align-items: flex-start; }
             .input-group label { width: 100%; text-align: left; margin-bottom: 5px; font-size: 14px; }
             .ip-input { width: 100%; font-size: 20px; }
-            .menu-btn { top: 10px; right: 10px; font-size: 12px; padding: 6px 12px; }
         }
 
         @keyframes blink { 50% { opacity: 0; } }
@@ -192,16 +196,14 @@
                 <label>BCアドレス (末尾)</label>
                 <input type="number" id="ans-bc" class="ip-input" placeholder="??">
             </div>
-            <button class="submit-btn" onclick="checkPuzzle()">解析実行</button>
+            <button id="submit-puzzle" class="submit-btn" onclick="checkPuzzle()">解析実行</button>
+            <button id="next-story-btn" class="next-story-btn" onclick="finishPuzzle()">シナリオに戻る</button>
             <p id="puzzle-feedback" style="margin-top:20px; min-height:24px; font-size:14px; line-height:1.5;"></p>
         </div>
     </div>
 </div>
 
 <script>
-    // --------------------------------------------------
-    // 設定
-    // --------------------------------------------------
     const GAS_URL = "https://script.google.com/macros/s/AKfycbzX8kMZXcAd9lha8I1atnU48S7zEuGV_-VUKXNnzOzZ1cMofUARH6XqKr4GJc_EsJlV/exec";
     
     const BG_IMAGES = {
@@ -222,7 +224,7 @@
             
             document.getElementById('loading-screen').style.display = 'none';
             document.getElementById('story-layer').style.display = 'flex';
-            document.getElementById('back-to-title').style.display = 'block'; // ボタンを表示
+            document.getElementById('back-to-title').style.display = 'block';
             
             currentIndex = 0;
             renderStep();
@@ -231,14 +233,9 @@
         }
     }
 
-    // タイトルへ戻る処理
     function backToTitle() {
-        if (!confirm('タイトルに戻りますか？（進捗はリセットされます）')) return;
-        
-        document.getElementById('title-layer').style.display = 'flex';
-        document.getElementById('story-layer').style.display = 'none';
-        document.getElementById('puzzle-layer').style.display = 'none';
-        document.getElementById('back-to-title').style.display = 'none'; // ボタンを隠す
+        if (!confirm('タイトルに戻りますか？')) return;
+        location.reload();
     }
 
     function renderStep() {
@@ -247,6 +244,10 @@
         if (step.type === "puzzle") {
             document.getElementById('story-layer').style.display = 'none';
             document.getElementById('puzzle-layer').style.display = 'flex';
+            // パズル画面の状態をリセット
+            document.getElementById('submit-puzzle').style.display = 'inline-block';
+            document.getElementById('next-story-btn').style.display = 'none';
+            document.getElementById('puzzle-feedback').innerText = "";
             return;
         }
 
@@ -281,10 +282,26 @@
 
         if (nw === "64" && bc === "95") {
             feedback.style.color = "var(--success-color)";
-            feedback.innerHTML = "<strong>正解です！</strong>";
+            feedback.innerHTML = "<strong>解析成功！</strong><br>正解です。論理的な理解が進んでいるようですね。";
+            
+            // 解析実行ボタンを隠し、戻るボタンを出す
+            document.getElementById('submit-puzzle').style.display = 'none';
+            document.getElementById('next-story-btn').style.display = 'inline-block';
         } else {
             feedback.style.color = "var(--error-color)";
-            feedback.innerHTML = "<strong>エラー：再計算してください。</strong>";
+            feedback.innerHTML = "<strong>解析エラー。</strong><br>ホスト部（右5つ）のビット操作を確認してください。";
+        }
+    }
+
+    // パズル終了後にシナリオの続きへ進む処理
+    function finishPuzzle() {
+        document.getElementById('puzzle-layer').style.display = 'none';
+        document.getElementById('story-layer').style.display = 'flex';
+        
+        // 台本の次の行へ進める
+        if (currentIndex < scenarioData.length - 1) {
+            currentIndex++;
+            renderStep();
         }
     }
 </script>
