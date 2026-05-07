@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NW研修アドベンチャー：第3話</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --window-bg: rgba(10, 15, 25, 0.95);
+            --text-main: #f8fafc;
+            --accent: #38bdf8;
+            --senior-color: #38bdf8;
+            --newcomer-color: #f472b6;
+            --success-color: #ccff00;
+            --error-color: #ef4444;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Noto Sans JP', sans-serif;
+            background-color: #000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            overflow: hidden;
+        }
+
+        #game-stage {
+            width: 100vw;
+            height: 100vh;
+            max-width: 1280px;
+            max-height: 720px;
+            position: relative;
+            background-color: #111;
+            background-size: cover;
+            background-position: center;
+            border: 1px solid #333;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+        }
+
+        /* ストーリー用 */
+        #story-layer {
+            width: 100%; height: 100%;
+            position: absolute; top: 0; left: 0;
+            display: flex; flex-direction: column; justify-content: flex-end;
+            cursor: pointer;
+            z-index: 10;
+        }
+
+        #char-layer {
+            position: absolute; bottom: 200px; width: 100%; height: 80%;
+            display: flex; justify-content: space-around; align-items: flex-end;
+            padding: 0 50px; pointer-events: none;
+        }
+
+        .sprite {
+            width: 350px; height: 500px;
+            background-size: contain; background-repeat: no-repeat; background-position: bottom center;
+            filter: brightness(0.4) grayscale(0.3); transition: all 0.3s ease; transform: scale(0.95);
+        }
+
+        .sprite.active { filter: brightness(1) grayscale(0); transform: scale(1.05); }
+
+        #sprite-senior { background-image: url('senior.jpg'); }
+        #sprite-newcomer { background-image: url('newcomer.jpg'); }
+
+        #message-window {
+            width: 95%; max-width: 1100px; height: 180px; margin: 0 auto 20px;
+            background: var(--window-bg); border: 2px solid #334155; border-radius: 12px;
+            padding: 30px 50px; position: relative;
+        }
+
+        #name-tag {
+            position: absolute; top: -20px; left: 30px; padding: 5px 30px;
+            font-weight: 700; font-size: 18px; color: #000; border-radius: 4px;
+        }
+
+        #message-text { font-size: 22px; color: var(--text-main); line-height: 1.6; }
+
+        /* パズル用 */
+        #puzzle-layer {
+            display: none; width: 100%; height: 100%;
+            position: absolute; top: 0; left: 0;
+            background: rgba(10, 15, 25, 0.98); z-index: 20;
+            flex-direction: column; align-items: center; justify-content: center;
+        }
+
+        .puzzle-box {
+            background: #0f172a; border: 2px solid #334155; border-radius: 12px;
+            padding: 40px; width: 90%; max-width: 800px; text-align: center;
+        }
+
+        .target-ip {
+            font-family: 'JetBrains Mono', monospace; font-size: 42px; color: #fff;
+            background: #1e293b; padding: 15px; border-radius: 8px; margin: 20px 0;
+        }
+
+        .input-group { display: flex; align-items: center; justify-content: center; margin-bottom: 15px; }
+        .input-group label { width: 250px; text-align: right; margin-right: 15px; color: #94a3b8; }
+        
+        .ip-input {
+            font-family: 'JetBrains Mono', monospace; font-size: 24px; width: 100px;
+            padding: 8px; background: #1e293b; border: 2px solid #475569;
+            color: var(--success-color); border-radius: 6px; text-align: center;
+        }
+
+        .submit-btn {
+            background: var(--accent); color: #000; font-weight: 700;
+            padding: 12px 40px; border: none; border-radius: 6px; cursor: pointer; margin-top: 20px;
+        }
+
+        #loading-screen {
+            position: absolute; inset: 0; background: #000; color: var(--accent);
+            display: flex; align-items: center; justify-content: center; z-index: 100;
+            font-family: 'JetBrains Mono', monospace; font-size: 24px;
+        }
+
+        @keyframes blink { 50% { opacity: 0; } }
+        .cursor { display: inline-block; width: 15px; height: 15px; background: var(--accent); animation: blink 1s infinite; }
+    </style>
+</head>
+<body>
+
+<div id="game-stage">
+    <div id="loading-screen">INITIALIZING DATA...</div>
+
+    <div id="story-layer" onclick="handleInteraction()">
+        <div id="char-layer">
+            <div id="sprite-newcomer" class="sprite"></div>
+            <div id="sprite-senior" class="sprite"></div>
+        </div>
+        <div id="message-window">
+            <div id="name-tag"></div>
+            <div id="message-text"></div>
+            <div style="position: absolute; bottom: 15px; right: 25px;"><span class="cursor"></span></div>
+        </div>
+    </div>
+
+    <div id="puzzle-layer">
+        <div class="puzzle-box">
+            <h2 style="color:var(--accent); margin-bottom:10px;">MISSION: NETWORK CALCULATION</h2>
+            <p style="color:#94a3b8; margin-bottom:20px;">192.168.1.90/27 のネットワーク情報を解析せよ</p>
+            <div class="target-ip">192.168.1.90 <span style="color:var(--accent)">/ 27</span></div>
+            <div class="input-group">
+                <label>ネットワークアドレス (末尾)</label>
+                <input type="number" id="ans-nw" class="ip-input" placeholder="??">
+            </div>
+            <div class="input-group">
+                <label>ブロードキャストアドレス (末尾)</label>
+                <input type="number" id="ans-bc" class="ip-input" placeholder="??">
+            </div>
+            <button class="submit-btn" onclick="checkPuzzle()">解析実行</button>
+            <p id="puzzle-feedback" style="margin-top:20px; min-height:24px;"></p>
+        </div>
+    </div>
+</div>
+
+<script>
+    // --------------------------------------------------
+    // 設定
+    // --------------------------------------------------
+    const GAS_URL = "ここにあなたのGASウェブアプリURLを貼り付け";
+    
+    const BG_IMAGES = {
+        office: "https://images.unsplash.com/photo-1497215728101-856f4ea42174?auto=format&fit=crop&w=1280&q=80",
+        server_room: "https://images.unsplash.com/photo-1558494949-ef010cbdcc31?auto=format&fit=crop&w=1280&q=80"
+    };
+
+    // --------------------------------------------------
+    // ゲームエンジン
+    // --------------------------------------------------
+    let scenarioData = [];
+    let currentIndex = 0;
+
+    async function init() {
+        try {
+            const res = await fetch(GAS_URL);
+            scenarioData = await res.json();
+            document.getElementById('loading-screen').style.display = 'none';
+            renderStep();
+        } catch (e) {
+            document.getElementById('loading-screen').innerText = "FATAL ERROR: DATA FETCH FAILED";
+        }
+    }
+
+    function renderStep() {
+        const step = scenarioData[currentIndex];
+        
+        // パズル判定
+        if (step.type === "puzzle") {
+            document.getElementById('story-layer').style.display = 'none';
+            document.getElementById('puzzle-layer').style.display = 'flex';
+            return;
+        }
+
+        const nameTag = document.getElementById('name-tag');
+        const messageText = document.getElementById('message-text');
+        const stage = document.getElementById('game-stage');
+
+        // 背景
+        if (BG_IMAGES[step.bg]) {
+            stage.style.backgroundImage = `linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), url('${BG_IMAGES[step.bg]}')`;
+        }
+
+        // 名前と色
+        nameTag.innerText = step.speaker;
+        nameTag.style.backgroundColor = (step.charId === "senior") ? "#38bdf8" : "#f472b6";
+        messageText.innerText = step.text;
+
+        // キャラクター演出
+        document.querySelectorAll('.sprite').forEach(s => s.classList.remove('active'));
+        const activeSprite = document.getElementById(`sprite-${step.charId}`);
+        if (activeSprite) activeSprite.classList.add('active');
+    }
+
+    function handleInteraction() {
+        if (currentIndex < scenarioData.length - 1) {
+            currentIndex++;
+            renderStep();
+        }
+    }
+
+    function checkPuzzle() {
+        const nw = document.getElementById('ans-nw').value;
+        const bc = document.getElementById('ans-bc').value;
+        const feedback = document.getElementById('puzzle-feedback');
+
+        if (nw === "64" && bc === "95") {
+            feedback.style.color = "var(--success-color)";
+            feedback.innerText = "正解です！第3話ミッション・コンプリート。";
+        } else {
+            feedback.style.color = "var(--error-color)";
+            feedback.innerText = "解析エラー。計算を見直してください。";
+        }
+    }
+
+    window.onload = init;
+</script>
+</body>
+</html>
