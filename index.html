@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>NW研修アドベンチャー：第3話</title>
+    <title>NW研修アドベンチャー</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
@@ -24,172 +24,114 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            height: 100vh;
-            /* スマホブラウザ特有のアドレスバーの挙動に対応するための単位 */
-            height: 100dvh; 
+            height: 100dvh;
             margin: 0;
+            overflow: hidden;
+            color: #fff;
+        }
+
+        #game-stage {
+            width: 100vw; height: 100vh; max-width: 1280px; max-height: 720px;
+            position: relative; background-color: #111;
+            background-size: cover; background-position: center;
+            display: flex; flex-direction: column; justify-content: flex-end;
             overflow: hidden;
         }
 
         /* -------------------------------------
-           ベース設定（PC・横画面向け）
+           タイトル（エピソード選択）画面
         ------------------------------------- */
-        #game-stage {
-            width: 100vw;
-            height: 100vh;
-            max-width: 1280px;
-            max-height: 720px;
-            position: relative;
-            background-color: #111;
-            background-size: cover;
-            background-position: center;
-            display: flex;
-            flex-direction: column;
-            justify-content: flex-end;
-            overflow: hidden;
+        #title-layer {
+            position: absolute; inset: 0; z-index: 50;
+            background: linear-gradient(rgba(0,0,0,0.7), rgba(0,0,0,0.8)), url('https://images.unsplash.com/photo-1558494949-ef010cbdcc31?auto=format&fit=crop&w=1280&q=80') center/cover;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
         }
 
-        /* ストーリーパート */
-        #story-layer {
-            width: 100%; height: 100%;
-            position: absolute; top: 0; left: 0;
-            display: flex; flex-direction: column; justify-content: flex-end;
-            cursor: pointer; z-index: 10;
+        .game-title {
+            font-size: 48px; font-weight: 700; color: var(--success-color);
+            margin-bottom: 10px; text-align: center; letter-spacing: 3px;
+            text-shadow: 0 0 20px rgba(204, 255, 0, 0.5);
         }
 
-        #char-layer {
-            position: absolute; bottom: 180px; width: 100%; height: 70%;
-            display: flex; justify-content: space-around; align-items: flex-end;
-            padding: 0 10%; pointer-events: none;
+        .game-subtitle { font-size: 18px; color: #94a3b8; margin-bottom: 50px; letter-spacing: 2px; }
+
+        .ep-list { display: flex; flex-direction: column; gap: 15px; width: 90%; max-width: 400px; }
+
+        .ep-btn {
+            background: rgba(30, 41, 59, 0.8); border: 2px solid #334155;
+            color: #fff; font-size: 18px; font-weight: 700; padding: 15px 20px;
+            border-radius: 8px; cursor: pointer; transition: 0.2s;
+            display: flex; justify-content: space-between; align-items: center;
         }
 
-        .sprite {
-            width: 40%; height: 100%;
-            background-size: contain; background-repeat: no-repeat; background-position: bottom center;
-            filter: brightness(0.4) grayscale(0.3); transition: all 0.3s ease; transform: scale(0.95);
-        }
-        .sprite.active { filter: brightness(1) grayscale(0); transform: scale(1.05); }
+        .ep-btn:hover { background: #334155; border-color: var(--accent); transform: translateX(10px); }
+        .ep-btn.locked { opacity: 0.5; cursor: not-allowed; }
+        .ep-btn.locked:hover { transform: none; background: rgba(30, 41, 59, 0.8); border-color: #334155; }
 
-        #sprite-senior { background-image: url('image/senior.jpg'); }
-        #sprite-newcomer { background-image: url('image/newcomer.jpg'); }
-
-        #message-window {
-            width: 95%; height: 160px; margin: 0 auto 20px;
-            background: var(--window-bg); border: 2px solid #334155; border-radius: 12px;
-            padding: 25px 40px; position: relative;
-        }
-
-        #name-tag {
-            position: absolute; top: -20px; left: 30px; padding: 5px 30px;
-            font-weight: 700; font-size: 18px; color: #000; border-radius: 4px;
-        }
-
-        #message-text { font-size: 22px; color: var(--text-main); line-height: 1.6; }
-
-        /* パズルパート */
-        #puzzle-layer {
-            display: none; width: 100%; height: 100%;
-            position: absolute; top: 0; left: 0;
-            background: rgba(10, 15, 25, 0.98); z-index: 20;
-            flex-direction: column; align-items: center; justify-content: center;
-        }
-
-        .puzzle-box {
-            background: #0f172a; border: 2px solid #334155; border-radius: 12px;
-            padding: 40px; width: 90%; max-width: 800px; text-align: center;
-        }
-
-        .target-ip {
-            font-family: 'JetBrains Mono', monospace; font-size: 42px; color: #fff;
-            background: #1e293b; padding: 15px; border-radius: 8px; margin: 20px 0;
-        }
-
-        .input-group { display: flex; align-items: center; justify-content: center; margin-bottom: 15px; }
-        .input-group label { width: 250px; text-align: right; margin-right: 15px; color: #94a3b8; }
-        
-        .ip-input {
-            font-family: 'JetBrains Mono', monospace; font-size: 24px; width: 100px;
-            padding: 8px; background: #1e293b; border: 2px solid #475569;
-            color: var(--success-color); border-radius: 6px; text-align: center;
-        }
-
-        .submit-btn {
-            background: var(--accent); color: #000; font-weight: 700;
-            padding: 12px 40px; border: none; border-radius: 6px; cursor: pointer; margin-top: 20px;
-        }
-
+        /* ロード画面 */
         #loading-screen {
             position: absolute; inset: 0; background: #000; color: var(--accent);
-            display: flex; align-items: center; justify-content: center; z-index: 100;
+            display: none; align-items: center; justify-content: center; z-index: 100;
             font-family: 'JetBrains Mono', monospace; font-size: 24px;
         }
 
         /* -------------------------------------
-           スマホ・縦画面向け（レスポンシブ）
+           ストーリー・パズル画面（既存）
         ------------------------------------- */
+        #story-layer {
+            display: none; width: 100%; height: 100%; position: absolute; top: 0; left: 0;
+            flex-direction: column; justify-content: flex-end; cursor: pointer; z-index: 10;
+        }
+
+        #char-layer {
+            position: absolute; bottom: 180px; width: 100%; height: 70%;
+            display: flex; justify-content: space-around; align-items: flex-end; padding: 0 10%; pointer-events: none;
+        }
+
+        .sprite {
+            width: 40%; height: 100%; background-size: contain; background-repeat: no-repeat; background-position: bottom center;
+            filter: brightness(0.4) grayscale(0.3); transition: all 0.3s ease; transform: scale(0.95);
+        }
+        .sprite.active { filter: brightness(1) grayscale(0); transform: scale(1.05); }
+
+        #sprite-senior { background-image: url('image/senior.png'); }
+        #sprite-newcomer { background-image: url('image/newcomer.png'); }
+
+        #message-window {
+            width: 95%; height: 160px; margin: 0 auto 20px; background: var(--window-bg); border: 2px solid #334155; border-radius: 12px;
+            padding: 25px 40px; position: relative;
+        }
+
+        #name-tag {
+            position: absolute; top: -20px; left: 30px; padding: 5px 30px; font-weight: 700; font-size: 18px; color: #000; border-radius: 4px;
+        }
+        #message-text { font-size: 22px; color: var(--text-main); line-height: 1.6; }
+
+        #puzzle-layer {
+            display: none; width: 100%; height: 100%; position: absolute; top: 0; left: 0;
+            background: rgba(10, 15, 25, 0.98); z-index: 20; flex-direction: column; align-items: center; justify-content: center;
+        }
+
+        .puzzle-box { background: #0f172a; border: 2px solid #334155; border-radius: 12px; padding: 40px; width: 90%; max-width: 800px; text-align: center; }
+        .target-ip { font-family: 'JetBrains Mono', monospace; font-size: 42px; background: #1e293b; padding: 15px; border-radius: 8px; margin: 20px 0; }
+        .input-group { display: flex; align-items: center; justify-content: center; margin-bottom: 15px; }
+        .input-group label { width: 250px; text-align: right; margin-right: 15px; color: #94a3b8; }
+        .ip-input { font-family: 'JetBrains Mono', monospace; font-size: 24px; width: 100px; padding: 8px; background: #1e293b; border: 2px solid #475569; color: var(--success-color); border-radius: 6px; text-align: center; }
+        .submit-btn { background: var(--accent); color: #000; font-weight: 700; padding: 12px 40px; border: none; border-radius: 6px; cursor: pointer; margin-top: 20px; }
+
         @media (max-width: 768px), (orientation: portrait) {
-            #game-stage {
-                width: 100vw;
-                height: 100dvh; /* スマホの縦幅いっぱいに広げる */
-                max-width: 100%;
-                max-height: 100%;
-                border: none;
-            }
-
-            #char-layer {
-                bottom: 25%; /* テキストウィンドウの上に配置 */
-                height: 50%; /* キャラが大きすぎないように調整 */
-                padding: 0 2%;
-            }
-
-            .sprite {
-                width: 48%; /* 縦画面でも2体が並べるように */
-            }
-
-            #message-window {
-                width: 95%;
-                height: auto;
-                min-height: 22%; /* 高さを少し広めに確保 */
-                margin-bottom: 5%;
-                padding: 25px 20px 15px; /* 上部のパディングを確保（名前タグと被らないように） */
-            }
-
-            #message-text {
-                font-size: 16px; /* スマホ用にフォントサイズを縮小 */
-            }
-
-            #name-tag {
-                font-size: 14px;
-                top: -15px;
-                padding: 3px 20px;
-            }
-
-            /* パズル画面の縦最適化 */
-            .puzzle-box {
-                padding: 20px;
-                width: 95%;
-            }
-
-            .puzzle-box h2 { font-size: 20px; }
-            .puzzle-box p { font-size: 14px; }
+            #game-stage { width: 100vw; height: 100dvh; max-width: 100%; max-height: 100%; border: none; }
+            .game-title { font-size: 32px; }
+            #char-layer { bottom: 25%; height: 50%; padding: 0 2%; }
+            .sprite { width: 48%; }
+            #message-window { width: 95%; height: auto; min-height: 22%; margin-bottom: 5%; padding: 25px 20px 15px; }
+            #message-text { font-size: 16px; }
+            #name-tag { font-size: 14px; top: -15px; padding: 3px 20px; }
+            .puzzle-box { padding: 20px; width: 95%; }
             .target-ip { font-size: 28px; padding: 10px; }
-
-            .input-group {
-                flex-direction: column; /* 横並びを縦並びに変更 */
-                align-items: flex-start;
-            }
-
-            .input-group label {
-                width: 100%;
-                text-align: left;
-                margin-bottom: 5px;
-                font-size: 14px;
-            }
-
-            .ip-input {
-                width: 100%; /* 入力欄を横幅いっぱいにしてタップしやすく */
-                font-size: 20px;
-            }
+            .input-group { flex-direction: column; align-items: flex-start; }
+            .input-group label { width: 100%; text-align: left; margin-bottom: 5px; font-size: 14px; }
+            .ip-input { width: 100%; font-size: 20px; }
         }
 
         @keyframes blink { 50% { opacity: 0; } }
@@ -199,7 +141,18 @@
 <body>
 
 <div id="game-stage">
-    <div id="loading-screen">INITIALIZING DATA...</div>
+    
+    <div id="title-layer">
+        <div class="game-title">NW TRAINING<br>ADVENTURE</div>
+        <div class="game-subtitle">～ 論理的思考で学ぶネットワーク構築 ～</div>
+        <div class="ep-list">
+            <button class="ep-btn locked" onclick="alert('このエピソードは準備中です')">第1話：ネットワークとは？ <span>🔒</span></button>
+            <button class="ep-btn locked" onclick="alert('このエピソードは準備中です')">第2話：2進数の基礎 <span>🔒</span></button>
+            <button class="ep-btn" onclick="startGame('ep3')">第3話：IPアドレスと定規 <span>▶</span></button>
+        </div>
+    </div>
+
+    <div id="loading-screen">FETCHING DATA...</div>
 
     <div id="story-layer" onclick="handleInteraction()">
         <div id="char-layer">
@@ -228,13 +181,15 @@
             </div>
             <button class="submit-btn" onclick="checkPuzzle()">解析実行</button>
             <p id="puzzle-feedback" style="margin-top:20px; min-height:24px; font-size:14px; line-height:1.5;"></p>
+            
+            <button class="submit-btn" style="background: #334155; color: #fff; margin-top: 10px; display: none;" id="return-btn" onclick="location.reload()">タイトルへ戻る</button>
         </div>
     </div>
 </div>
 
 <script>
     // --------------------------------------------------
-    // 設定（★ここを書き換えてください★）
+    // 設定（★書き換えてください★）
     // --------------------------------------------------
     const GAS_URL = "https://script.google.com/macros/s/AKfycbzX8kMZXcAd9lha8I1atnU48S7zEuGV_-VUKXNnzOzZ1cMofUARH6XqKr4GJc_EsJlV/exec";
     
@@ -243,27 +198,33 @@
         server_room: "https://images.unsplash.com/photo-1558494949-ef010cbdcc31?auto=format&fit=crop&w=1280&q=80"
     };
 
-    // --------------------------------------------------
-    // ゲームエンジン
-    // --------------------------------------------------
     let scenarioData = [];
     let currentIndex = 0;
 
-    async function init() {
+    // ゲーム開始処理（引数でエピソードIDを受け取る）
+    async function startGame(episodeId) {
+        // UIの切り替え
+        document.getElementById('title-layer').style.display = 'none';
+        document.getElementById('loading-screen').style.display = 'flex';
+
         try {
-            const res = await fetch(GAS_URL);
+            // URLの末尾に ?ep=ep3 などを付与してGASにリクエスト
+            const res = await fetch(`${GAS_URL}?ep=${episodeId}`);
             scenarioData = await res.json();
+            
             document.getElementById('loading-screen').style.display = 'none';
+            document.getElementById('story-layer').style.display = 'flex';
+            
+            currentIndex = 0;
             renderStep();
         } catch (e) {
-            document.getElementById('loading-screen').innerText = "FATAL ERROR: DATA FETCH FAILED\n\n・URLが間違っていないか\n・GASの権限が「全員」になっているか\n確認してください。";
+            document.getElementById('loading-screen').innerText = "ERROR: DATA FETCH FAILED";
         }
     }
 
     function renderStep() {
         const step = scenarioData[currentIndex];
         
-        // パズル判定
         if (step.type === "puzzle") {
             document.getElementById('story-layer').style.display = 'none';
             document.getElementById('puzzle-layer').style.display = 'flex';
@@ -274,17 +235,14 @@
         const messageText = document.getElementById('message-text');
         const stage = document.getElementById('game-stage');
 
-        // 背景
         if (BG_IMAGES[step.bg]) {
             stage.style.backgroundImage = `linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), url('${BG_IMAGES[step.bg]}')`;
         }
 
-        // 名前と色
         nameTag.innerText = step.speaker;
         nameTag.style.backgroundColor = (step.charId === "senior") ? "#38bdf8" : "#f472b6";
         messageText.innerText = step.text;
 
-        // キャラクター演出
         document.querySelectorAll('.sprite').forEach(s => s.classList.remove('active'));
         const activeSprite = document.getElementById(`sprite-${step.charId}`);
         if (activeSprite) activeSprite.classList.add('active');
@@ -301,10 +259,12 @@
         const nw = document.getElementById('ans-nw').value;
         const bc = document.getElementById('ans-bc').value;
         const feedback = document.getElementById('puzzle-feedback');
+        const returnBtn = document.getElementById('return-btn');
 
         if (nw === "64" && bc === "95") {
             feedback.style.color = "var(--success-color)";
             feedback.innerHTML = "<strong>正解です！</strong><br>ホスト部をすべて0にするとNWアドレス、1にするとBCアドレスになるロジックが完璧に理解できています。";
+            returnBtn.style.display = "inline-block"; // 正解したら「タイトルへ戻る」ボタンを表示
         } else {
             feedback.style.color = "var(--error-color)";
             if (nw !== "64") {
@@ -314,8 +274,6 @@
             }
         }
     }
-
-    window.onload = init;
 </script>
 </body>
 </html>
